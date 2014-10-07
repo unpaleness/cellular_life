@@ -1,5 +1,9 @@
 #include "engine.h"
 
+/*
+ * PUBLIC FUCNTIONS
+*/
+
 Field::Field(int size)
 {
   srand(time(0));
@@ -45,6 +49,10 @@ void Field::next_iteration()
   _active = 1 - _active;
   _link_borders();
 }
+
+/*
+ * PRIVATE FUNCTIONS
+*/
 
 void Field::_memory_alloc()
 {
@@ -108,6 +116,15 @@ void Field::_nullificate(short index)
     }
 }
 
+void Field::_randomize(short persentage_fill)
+{
+  for(int j = 1; j < _size + 1; j++)
+    for(int i = 1; i < _size + 1; i++)
+      if(rand() % 100 < persentage_fill) _cells[_active][j][i] = 1;
+      else _cells[_active][j][i] = 0;
+}
+
+//in case of torus this function copies border values to the opposite sides
 void Field::_link_borders()
 {
   for(int n = 1; n < _size + 1; n++)

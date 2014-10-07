@@ -32,6 +32,7 @@ private:
   void _memory_delete();
 
   void _nullificate(short index);
+  void _randomize(short persentage_fill);
   short _surroundings(int y, int x);
   short _next_cell_state(int y, int x);
   void _link_borders(); //to make field torus-like

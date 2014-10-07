@@ -2,20 +2,25 @@
 #include "widget.h"
 #include "ui_widget.h"
 
+/*
+ * PUBLIC FUNCTIONS
+ */
+
 Widget::Widget(QWidget *parent) : QWidget(parent), _ui(new Ui::Widget)
 {
   _ui->setupUi(this);
+  _field = 0;
   _indent_left = 110; //какая-то хрень лево
   _indent_top = 5; //какая-то хрень верх
   _do_paint = true; //do paint
   _continue_counting = false; //continue counting
+  _cycle_completed = true;
   _exit = false; //exit
   _cell_size = 8; //cell size
   _steps = 0; //steps
-  _time_.tv_sec = 0; //seconds
-  _time_.tv_nsec = 10000000; //nanoseconds
-  _time_sys.tv_sec = 1;
-  _time_sys.tv_nsec = 0;
+//  _time[0].tv_sec = 0; //seconds
+//  _time[0].tv_nsec = 10000000; //nanoseconds
+  _delay = 10000;
 }
 
 Widget::~Widget()
@@ -25,8 +30,29 @@ Widget::~Widget()
 
 void Widget::setField(Field *field) { _field = field; }
 
+void Widget::setMutex(QMutex *mutex) { _mutex = mutex; }
+
+void Widget::setThreadImp(ThreadImp *thread_imp) { _thread_imp = thread_imp; }
+
+bool Widget::exit() { return _exit; }
+
+bool Widget::continue_counting() { return _continue_counting; }
+
+bool *Widget::cycle_completed() { return &_cycle_completed; }
+
+bool *Widget::do_paint() { return &_do_paint; }
+
+unsigned long long Widget::delay() { return _delay; }
+
+void Widget::one_cycle() { _one_cycle(); }
+
+/*
+ * PRIVATE FUNCTIONS
+ */
+
 void Widget::_paint_field()
 {
+  _mutex->lock();
   _painter.begin(this);
   QColor color;
   color = Qt::gray;
@@ -42,6 +68,7 @@ void Widget::_paint_field()
                           _cell_size, _cell_size, color);
     }
   _painter.end();
+  _mutex->unlock();
 }
 
 void Widget::_one_cycle()
@@ -49,8 +76,8 @@ void Widget::_one_cycle()
   _field->next_iteration(); //следующая итерация
   _steps++;
   _ui->lineEdit_iter->setText(QString::number(_steps));
-  _do_paint = true;
-  update();
+//  _do_paint = true;
+//  update();
 }
 
 void Widget::_pause()
@@ -68,21 +95,9 @@ void Widget::_pause()
   }
 }
 
-void Widget::implementation()
-{
-  while(!_exit)
-  {
-    if(_continue_counting)
-    {
-      _one_cycle();
-    }
-    nanosleep(&_time_, &_time_2);
-  }
-}
-
 /*
  * SLOTS
-*/
+ */
 
 void Widget::on_pushButton_iter_released()
 {
@@ -125,12 +140,13 @@ void Widget::on_spinBox_fieldsize_valueChanged(int arg1)
 
 void Widget::on_spinBox_delay_valueChanged(int arg1)
 {
-  _time_.tv_nsec = arg1;
+//  _time[0].tv_nsec = arg1;
+  _delay = arg1;
 }
 
 /*
  * EVENTS
-*/
+ */
 
 void Widget::paintEvent(QPaintEvent *)
 {
@@ -142,6 +158,7 @@ void Widget::showEvent(QShowEvent *)
 {
   _ui->spinBox_cellsize->setValue(_cell_size);
   _ui->spinBox_fieldsize->setValue(_field->size());
+  _ui->spinBox_delay->setValue(_delay);
   update();
 }
 
@@ -197,5 +214,6 @@ void Widget::keyReleaseEvent(QKeyEvent *)
 void Widget::closeEvent(QCloseEvent *)
 {
   _exit = true;
+  _thread_imp->quit();
   QApplication::exit();
 }

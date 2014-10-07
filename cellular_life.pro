@@ -14,13 +14,15 @@ TEMPLATE = app
 
 SOURCES += main.cpp\
         widget.cpp \
-    engine.cpp
+    engine.cpp \
+    thread_imp.cpp
 
 QMAKE_CXXFLAGS += -std=c++11
 
 QMAKE_LFLAGS += -pthread
 
 HEADERS  += widget.h \
-    engine.h
+    engine.h \
+    thread_imp.h
 
 FORMS    += widget.ui
