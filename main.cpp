@@ -16,7 +16,6 @@ int main(int argc, char *argv[])
   widget.setMutex(&mutex);
   thread_imp.setWidget(&widget);
   thread_imp.setMutex(&mutex);
-//  QtConcurrent::run(&w, &Widget::implementation);
   widget.show();
   thread_imp.start();
   return a.exec();

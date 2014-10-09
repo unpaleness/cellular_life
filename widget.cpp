@@ -15,11 +15,11 @@ Widget::Widget(QWidget *parent) : QWidget(parent), _ui(new Ui::Widget)
   _do_paint = true; //do paint
   _continue_counting = false; //continue counting
   _cycle_completed = true;
+  _thread_imp_completed = false;
   _exit = false; //exit
   _cell_size = 8; //cell size
+  _interspace = 1;
   _steps = 0; //steps
-//  _time[0].tv_sec = 0; //seconds
-//  _time[0].tv_nsec = 10000000; //nanoseconds
   _delay = 10000;
 }
 
@@ -40,7 +40,11 @@ bool Widget::continue_counting() { return _continue_counting; }
 
 bool *Widget::cycle_completed() { return &_cycle_completed; }
 
+bool *Widget::paint_completed() { return &_paint_completed; }
+
 bool *Widget::do_paint() { return &_do_paint; }
+
+bool *Widget::thread_imp_completed() { return &_thread_imp_completed; }
 
 unsigned long long Widget::delay() { return _delay; }
 
@@ -52,23 +56,38 @@ void Widget::one_cycle() { _one_cycle(); }
 
 void Widget::_paint_field()
 {
-  _mutex->lock();
+//  _mutex->lock();
+  _paint_completed = false;
   _painter.begin(this);
   QColor color;
-  color = Qt::gray;
-  _painter.fillRect(_indent_left, _indent_top, _field->size() * (_cell_size + 1) + 1,
-                    _field->size() * (_cell_size + 1) + 1, color);
-  color = Qt::green;
-  for(int j = 0; j < _field->size(); j++)
-    for(int i = 0; i < _field->size(); i++)
-    {
-      if(_field->cell(j, i) == 1)
-        _painter.fillRect(_indent_left + 1 + i * (_cell_size + 1),
-                          _indent_top + 1 + j * (_cell_size + 1),
-                          _cell_size, _cell_size, color);
-    }
+  color = Qt::white;
+  _painter.fillRect(_indent_left, _indent_top,
+                    _field->size() * (_cell_size + _interspace) + _interspace,
+                    _field->size() * (_cell_size + _interspace) + _interspace, color);
+  color = Qt::blue;
+  if(_cell_size == 1)
+  {
+    _painter.setPen(color);
+    for(int j = 0; j < _field->size(); j++)
+      for(int i = 0; i < _field->size(); i++)
+      {
+        if(_field->cell(j, i) == 1)
+          _painter.drawPoint(_indent_left + _interspace + i * (1 + _interspace),
+                             _indent_top + _interspace + j * (1 + _interspace));
+      }
+  }
+  else
+    for(int j = 0; j < _field->size(); j++)
+      for(int i = 0; i < _field->size(); i++)
+      {
+        if(_field->cell(j, i) == 1)
+          _painter.fillRect(_indent_left + _interspace + i * (_cell_size + _interspace),
+                            _indent_top + _interspace + j * (_cell_size + _interspace),
+                            _cell_size, _cell_size, color);
+      }
   _painter.end();
-  _mutex->unlock();
+  _paint_completed = true;
+//  _mutex->unlock();
 }
 
 void Widget::_one_cycle()
@@ -76,8 +95,6 @@ void Widget::_one_cycle()
   _field->next_iteration(); //следующая итерация
   _steps++;
   _ui->lineEdit_iter->setText(QString::number(_steps));
-//  _do_paint = true;
-//  update();
 }
 
 void Widget::_pause()
@@ -102,12 +119,12 @@ void Widget::_pause()
 void Widget::on_pushButton_iter_released()
 {
   _one_cycle();
+  update();
 }
 
 void Widget::on_pushButton_run_released()
 {
   _pause();
-//  nanosleep(&_time_sys, &_time_2);
   update();
 }
 
@@ -115,8 +132,15 @@ void Widget::on_pushButton_clear_released()
 {
   if(_continue_counting)
     _pause();
-//  nanosleep(&_time_sys, &_time_2);
   _field->clear();
+  update();
+}
+
+void Widget::on_pushButton_random_released()
+{
+  if(_continue_counting)
+    _pause();
+  _field->randomize(_ui->spinBox_random->value());
   update();
 }
 
@@ -124,7 +148,6 @@ void Widget::on_spinBox_cellsize_valueChanged(int arg1)
 {
   if(_continue_counting)
     _pause();
-//  nanosleep(&_time_sys, &_time_2);
   _cell_size = arg1;
   update();
 }
@@ -133,15 +156,21 @@ void Widget::on_spinBox_fieldsize_valueChanged(int arg1)
 {
   if(_continue_counting)
     _pause();
-//  nanosleep(&_time_sys, &_time_2);
   _field->reinitialize(arg1);
   update();
 }
 
 void Widget::on_spinBox_delay_valueChanged(int arg1)
 {
-//  _time[0].tv_nsec = arg1;
   _delay = arg1;
+}
+
+void Widget::on_spinBox_space_valueChanged(int arg1)
+{
+  if(_continue_counting)
+    _pause();
+  _interspace = arg1;
+  update();
 }
 
 /*
@@ -150,7 +179,7 @@ void Widget::on_spinBox_delay_valueChanged(int arg1)
 
 void Widget::paintEvent(QPaintEvent *)
 {
-  if(_do_paint)
+  if(_do_paint && _cycle_completed)
     _paint_field();
 }
 
@@ -173,18 +202,34 @@ void Widget::resizeEvent(QResizeEvent *)
 //  _ui->pushButton_run->move();
 }
 
-void Widget::mousePressEvent(QMouseEvent *)
+void Widget::mousePressEvent(QMouseEvent *event)
 {
   if(_continue_counting)
     _pause();
+  if(!_continue_counting)
+  {
+    short y = ((event->pos().y() - _indent_top) / (_cell_size + _interspace));
+    short x = ((event->pos().x() - _indent_left) / (_cell_size + _interspace));
+    if(y >= 0 && y < _field->size() && x >= 0 && x < _field->size())
+    {
+      _ui->lineEdit_x->setText(QString::number(x));
+      _ui->lineEdit_y->setText(QString::number(y));
+      if(_key == KEY_C)
+        _field->cell(y, x) = 0;
+      else
+        _field->cell(y, x) = 1;
+      _do_paint = true;
+      update();
+    }
+  }
 }
 
 void Widget::mouseMoveEvent(QMouseEvent *event)
 {
   if(!_continue_counting)
   {
-    short y = ((event->pos().y() - _indent_top) / (_cell_size + 1));
-    short x = ((event->pos().x() - _indent_left) / (_cell_size + 1));
+    short y = ((event->pos().y() - _indent_top) / (_cell_size + _interspace));
+    short x = ((event->pos().x() - _indent_left) / (_cell_size + _interspace));
     if(y >= 0 && y < _field->size() && x >= 0 && x < _field->size())
     {
       _ui->lineEdit_x->setText(QString::number(x));
@@ -214,6 +259,8 @@ void Widget::keyReleaseEvent(QKeyEvent *)
 void Widget::closeEvent(QCloseEvent *)
 {
   _exit = true;
-  _thread_imp->quit();
+//  QThread::msleep(_delay);
+//  _thread_imp->quit();
   QApplication::exit();
 }
+

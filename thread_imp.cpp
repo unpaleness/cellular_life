@@ -10,7 +10,7 @@ void ThreadImp::run()
 {
   while(!_w->exit())
   {
-      if(_w->continue_counting())
+      if(_w->continue_counting() && _w->paint_completed())
       {
         *_w->cycle_completed() = false;
         _w->one_cycle();
@@ -20,4 +20,5 @@ void ThreadImp::run()
       }
       usleep(_w->delay());
   }
+  *_w->thread_imp_completed() = true;
 }

@@ -41,6 +41,8 @@ void Field::clear()
   _nullificate(1);
 }
 
+void Field::randomize(short percentage_fill) { _randomize(percentage_fill); }
+
 void Field::next_iteration()
 {
   for(int j = 1; j < _size + 1; j++)
@@ -116,11 +118,11 @@ void Field::_nullificate(short index)
     }
 }
 
-void Field::_randomize(short persentage_fill)
+void Field::_randomize(short percentage_fill)
 {
   for(int j = 1; j < _size + 1; j++)
     for(int i = 1; i < _size + 1; i++)
-      if(rand() % 100 < persentage_fill) _cells[_active][j][i] = 1;
+      if(rand() % 100 < percentage_fill) _cells[_active][j][i] = 1;
       else _cells[_active][j][i] = 0;
 }
 

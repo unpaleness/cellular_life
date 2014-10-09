@@ -33,7 +33,9 @@ public:
   bool exit();
   bool continue_counting();
   bool *cycle_completed();
+  bool *paint_completed();
   bool *do_paint();
+  bool *thread_imp_completed();
 //  struct timespec *time(short);
   unsigned long long delay();
   void one_cycle();
@@ -53,20 +55,25 @@ private slots:
   void on_pushButton_iter_released();
   void on_pushButton_run_released();
   void on_pushButton_clear_released();
+  void on_pushButton_random_released();
   void on_spinBox_cellsize_valueChanged(int arg1);
   void on_spinBox_fieldsize_valueChanged(int arg1);
   void on_spinBox_delay_valueChanged(int arg1);
+  void on_spinBox_space_valueChanged(int arg1);
 
 private:
   Ui::Widget *_ui;
   int _key;
-  bool _do_paint; //enable to repaint
   short _indent_left; //left field indent
   short _indent_top; //top field indent
+  bool _do_paint; //enable to repaint
   bool _continue_counting; //enable to count
   bool _cycle_completed; //cycle completion indicator
+  bool _paint_completed; //paint completion indicator
   bool _exit; //enable to quit
+  bool _thread_imp_completed; //thread_imp completion indicator
   short _cell_size; //size of one cell (in pixels)
+  short _interspace; //space between cells
   long long int _steps; //number of generation
 //  struct timespec _time[2]; //time for delay: 0 - required, 1 - rest (optional)
   unsigned long long _delay;
