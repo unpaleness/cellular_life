@@ -46,6 +46,8 @@ bool *Widget::do_paint() { return &_do_paint; }
 
 bool *Widget::thread_imp_completed() { return &_thread_imp_completed; }
 
+Field *Widget::field() { return _field; }
+
 unsigned long long Widget::delay() { return _delay; }
 
 void Widget::one_cycle() { _one_cycle(); }
@@ -140,6 +142,7 @@ void Widget::on_pushButton_random_released()
 {
   if(_continue_counting)
     _pause();
+  _steps = 0;
   _field->randomize(_ui->spinBox_random->value());
   update();
 }
@@ -157,6 +160,7 @@ void Widget::on_spinBox_fieldsize_valueChanged(int arg1)
   if(_continue_counting)
     _pause();
   _field->reinitialize(arg1);
+  _steps = 0;
   update();
 }
 
@@ -189,17 +193,6 @@ void Widget::showEvent(QShowEvent *)
   _ui->spinBox_fieldsize->setValue(_field->size());
   _ui->spinBox_delay->setValue(_delay);
   update();
-}
-
-void Widget::moveEvent(QMoveEvent *)
-{
-  if(_continue_counting)
-    _pause();
-}
-
-void Widget::resizeEvent(QResizeEvent *)
-{
-//  _ui->pushButton_run->move();
 }
 
 void Widget::mousePressEvent(QMouseEvent *event)
@@ -259,8 +252,8 @@ void Widget::keyReleaseEvent(QKeyEvent *)
 void Widget::closeEvent(QCloseEvent *)
 {
   _exit = true;
-//  QThread::msleep(_delay);
-//  _thread_imp->quit();
-  QApplication::exit();
+  while(_thread_imp->isRunning()) {}
+//  _thread_imp->exit();
+  QApplication::exit(0);
 }
 

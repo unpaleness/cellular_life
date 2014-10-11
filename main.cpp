@@ -16,7 +16,7 @@ int main(int argc, char *argv[])
   widget.setMutex(&mutex);
   thread_imp.setWidget(&widget);
   thread_imp.setMutex(&mutex);
-  widget.show();
+  widget.showMaximized();
   thread_imp.start();
   return a.exec();
 }

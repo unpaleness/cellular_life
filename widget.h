@@ -5,6 +5,8 @@
 #include <QPainter>
 #include <QThread>
 #include <QMutex>
+#include <iostream>
+#include <fstream>
 #include "engine.h"
 #include "thread_imp.h"
 
@@ -36,6 +38,7 @@ public:
   bool *paint_completed();
   bool *do_paint();
   bool *thread_imp_completed();
+  Field *field();
 //  struct timespec *time(short);
   unsigned long long delay();
   void one_cycle();
@@ -44,8 +47,6 @@ protected:
   void paintEvent(QPaintEvent *);
   void closeEvent(QCloseEvent *);
   void showEvent(QShowEvent *);
-  void moveEvent(QMoveEvent *);
-  void resizeEvent(QResizeEvent *);
   void mousePressEvent(QMouseEvent *);
   void mouseMoveEvent(QMouseEvent *);
   void keyPressEvent(QKeyEvent *);
@@ -79,7 +80,7 @@ private:
   unsigned long long _delay;
   Field *_field; //pointer to field
   QMutex *_mutex; //mutex just for everybody!
-  ThreadImp *_thread_imp;
+  ThreadImp *_thread_imp; //thread for implementation
   QPainter _painter; //painter
 
   void _paint_field();
